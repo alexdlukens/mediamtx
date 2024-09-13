@@ -1,0 +1,44 @@
+name: mediamtx # you probably want to 'snapcraft register <name>'
+base: core24 # the base snap is the execution environment for this snap
+version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+summary: real-time media server and media proxy
+description: |
+  MediaMTX (formerly rtsp-simple-server) is a ready-to-use and zero-dependency 
+  real-time media server and media proxy that allows to publish, 
+  read, proxy, record and playback video and audio streams. 
+  It has been conceived as a "media router" that routes media streams from one end to the other.
+
+  The configuration file can be edited via /snap/mediamtx/current/mediamtx.yml
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
+
+parts:
+  mediamtx:
+    plugin: go
+    source: https://github.com/alexdlukens/mediamtx.git
+    build-packages: [git, ffmpeg]
+    build-snaps: [go]
+    override-build: |
+      go generate ./...
+      craftctl default
+    override-stage: |
+      craftctl default
+      cp $CRAFT_PART_BUILD/mediamtx.yml $CRAFT_STAGE/mediamtx.yml
+    override-prime: |
+      craftctl default
+      cp $CRAFT_STAGE/mediamtx.yml $CRAFT_PRIME/mediamtx.yml
+
+apps:
+  mediamtx:
+    command: bin/mediamtx
+    daemon: simple
+    plugs:
+      - network
+      - network-bind
+
+layout:
+  /etc/mediamtx/mediamtx.yml:
+    bind-file: $SNAP_DATA/mediamtx.yml
+
+
