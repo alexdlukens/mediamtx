@@ -1,0 +1,30 @@
+name: Build Snap Package
+
+# run on push to snap branch
+on:
+  push:
+    branches:
+      - snap
+
+jobs:
+  build:
+    # build snap package
+    runs-on: ubuntu-latest
+    outputs:
+      snap-file: ${{ steps.build-snap.outputs.snap }}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Get Git Hash
+      id: get-git-hash
+      run: echo "GIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+    - name: Update snapcraft.yaml
+      run: |
+        sed -i "s/^version: .*/version: '1.0.0+git${GIT_HASH}'/" snapcraft.yaml
+    - uses: snapcore/action-build@v1
+      id: build-snap
+    - run: |
+        sudo snap install --dangerous ${{ steps.build-snap.outputs.snap }}
+    - uses: actions/upload-artifact@v3
+      with:
+        name: mediamtx
+        path: ${{ steps.build-snap.outputs.snap }}
