@@ -10,6 +10,8 @@ description: |
 
   The configuration file can be edited via /snap/mediamtx/current/mediamtx.yml
 
+website: https://github.com/bluenviron/mediamtx.git
+
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
 
@@ -20,8 +22,10 @@ parts:
     build-packages: [git, ffmpeg]
     build-snaps: [go]
     override-build: |
+      go mod download
+      GIT_HASH=$(git rev-parse --short HEAD)
       go generate ./...
-      craftctl default
+      go build -ldflags "-X github.com/bluenviron/mediamtx/internal/core.version=${SNAPCRAFT_PROJECT_VERSION}.${GIT_HASH}" -o $SNAPCRAFT_PART_INSTALL/bin/mediamtx
     override-stage: |
       craftctl default
       cp $CRAFT_PART_BUILD/mediamtx.yml $CRAFT_STAGE/mediamtx.yml
