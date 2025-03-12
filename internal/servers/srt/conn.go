@@ -10,11 +10,10 @@ import (
 	"time"
 
 	"github.com/bluenviron/gortsplib/v4/pkg/description"
-	mcmpegts "github.com/bluenviron/mediacommon/pkg/formats/mpegts"
+	mcmpegts "github.com/bluenviron/mediacommon/v2/pkg/formats/mpegts"
 	srt "github.com/datarhei/gosrt"
 	"github.com/google/uuid"
 
-	"github.com/bluenviron/mediamtx/internal/asyncwriter"
 	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
@@ -52,9 +51,8 @@ const (
 type conn struct {
 	parentCtx           context.Context
 	rtspAddress         string
-	readTimeout         conf.StringDuration
-	writeTimeout        conf.StringDuration
-	writeQueueSize      int
+	readTimeout         conf.Duration
+	writeTimeout        conf.Duration
 	udpMaxPayloadSize   int
 	connReq             srt.ConnRequest
 	runOnConnect        string
@@ -143,13 +141,13 @@ func (c *conn) runPublish(streamID *streamID) error {
 		Author: c,
 		AccessRequest: defs.PathAccessRequest{
 			Name:    streamID.path,
+			Query:   streamID.query,
 			IP:      c.ip(),
 			Publish: true,
 			User:    streamID.user,
 			Pass:    streamID.pass,
 			Proto:   auth.ProtocolSRT,
 			ID:      &c.uuid,
-			Query:   streamID.query,
 		},
 	})
 	if err != nil {
@@ -216,7 +214,7 @@ func (c *conn) runPublishReader(sconn srt.Conn, path defs.Path) error {
 
 	var stream *stream.Stream
 
-	medias, err := mpegts.ToStream(r, &stream)
+	medias, err := mpegts.ToStream(r, &stream, c)
 	if err != nil {
 		return err
 	}
@@ -243,12 +241,12 @@ func (c *conn) runRead(streamID *streamID) error {
 		Author: c,
 		AccessRequest: defs.PathAccessRequest{
 			Name:  streamID.path,
+			Query: streamID.query,
 			IP:    c.ip(),
 			User:  streamID.user,
 			Pass:  streamID.pass,
 			Proto: auth.ProtocolSRT,
 			ID:    &c.uuid,
-			Query: streamID.query,
 		},
 	})
 	if err != nil {
@@ -284,18 +282,15 @@ func (c *conn) runRead(streamID *streamID) error {
 	c.sconn = sconn
 	c.mutex.Unlock()
 
-	writer := asyncwriter.New(c.writeQueueSize, c)
-	defer stream.RemoveReader(writer)
-
 	bw := bufio.NewWriterSize(sconn, srtMaxPayloadSize(c.udpMaxPayloadSize))
 
-	err = mpegts.FromStream(stream, writer, bw, sconn, time.Duration(c.writeTimeout))
+	err = mpegts.FromStream(stream, c, bw, sconn, time.Duration(c.writeTimeout))
 	if err != nil {
 		return err
 	}
 
 	c.Log(logger.Info, "is reading from path '%s', %s",
-		path.Name(), defs.FormatsInfo(stream.FormatsForReader(writer)))
+		path.Name(), defs.FormatsInfo(stream.ReaderFormats(c)))
 
 	onUnreadHook := hooks.OnRead(hooks.OnReadParams{
 		Logger:          c,
@@ -310,14 +305,14 @@ func (c *conn) runRead(streamID *streamID) error {
 	// disable read deadline
 	sconn.SetReadDeadline(time.Time{})
 
-	writer.Start()
-	defer writer.Stop()
+	stream.StartReader(c)
+	defer stream.RemoveReader(c)
 
 	select {
 	case <-c.ctx.Done():
 		return fmt.Errorf("terminated")
 
-	case err = <-writer.Error():
+	case err = <-stream.ReaderError(c):
 		return err
 	}
 }

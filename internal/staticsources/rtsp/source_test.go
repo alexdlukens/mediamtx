@@ -55,7 +55,7 @@ func TestSource(t *testing.T) {
 				Handler: &testServer{
 					onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx,
 					) (*base.Response, *gortsplib.ServerStream, error) {
-						err2 := auth.Validate(ctx.Request, "testuser", "testpass", nil, "IPCAM", nonce)
+						err2 := auth.Verify(ctx.Request, "testuser", "testpass", nil, "IPCAM", nonce)
 						if err2 != nil {
 							return &base.Response{ //nolint:nilerr
 								StatusCode: base.StatusUnauthorized,
@@ -138,8 +138,8 @@ func TestSource(t *testing.T) {
 				te = test.NewSourceTester(
 					func(p defs.StaticSourceParent) defs.StaticSource {
 						return &Source{
-							ReadTimeout:    conf.StringDuration(10 * time.Second),
-							WriteTimeout:   conf.StringDuration(10 * time.Second),
+							ReadTimeout:    conf.Duration(10 * time.Second),
+							WriteTimeout:   conf.Duration(10 * time.Second),
 							WriteQueueSize: 2048,
 							Parent:         p,
 						}
@@ -153,8 +153,8 @@ func TestSource(t *testing.T) {
 				te = test.NewSourceTester(
 					func(p defs.StaticSourceParent) defs.StaticSource {
 						return &Source{
-							ReadTimeout:    conf.StringDuration(10 * time.Second),
-							WriteTimeout:   conf.StringDuration(10 * time.Second),
+							ReadTimeout:    conf.Duration(10 * time.Second),
+							WriteTimeout:   conf.Duration(10 * time.Second),
 							WriteQueueSize: 2048,
 							Parent:         p,
 						}
@@ -184,7 +184,7 @@ func TestRTSPSourceNoPassword(t *testing.T) {
 	s := gortsplib.Server{
 		Handler: &testServer{
 			onDescribe: func(ctx *gortsplib.ServerHandlerOnDescribeCtx) (*base.Response, *gortsplib.ServerStream, error) {
-				err2 := auth.Validate(ctx.Request, "testuser", "", nil, "IPCAM", nonce)
+				err2 := auth.Verify(ctx.Request, "testuser", "", nil, "IPCAM", nonce)
 				if err2 != nil {
 					return &base.Response{ //nolint:nilerr
 						StatusCode: base.StatusUnauthorized,
@@ -241,8 +241,8 @@ func TestRTSPSourceNoPassword(t *testing.T) {
 	te := test.NewSourceTester(
 		func(p defs.StaticSourceParent) defs.StaticSource {
 			return &Source{
-				ReadTimeout:    conf.StringDuration(10 * time.Second),
-				WriteTimeout:   conf.StringDuration(10 * time.Second),
+				ReadTimeout:    conf.Duration(10 * time.Second),
+				WriteTimeout:   conf.Duration(10 * time.Second),
 				WriteQueueSize: 2048,
 				Parent:         p,
 			}
@@ -338,8 +338,8 @@ func TestRTSPSourceRange(t *testing.T) {
 			te := test.NewSourceTester(
 				func(p defs.StaticSourceParent) defs.StaticSource {
 					return &Source{
-						ReadTimeout:    conf.StringDuration(10 * time.Second),
-						WriteTimeout:   conf.StringDuration(10 * time.Second),
+						ReadTimeout:    conf.Duration(10 * time.Second),
+						WriteTimeout:   conf.Duration(10 * time.Second),
 						WriteQueueSize: 2048,
 						Parent:         p,
 					}
