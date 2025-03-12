@@ -14,13 +14,14 @@ website: https://github.com/bluenviron/mediamtx.git
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
-source-branch: snap
+source-code: https://github.com/alexdlukens/mediamtx
 adopt-info: mediamtx
 
 parts:
   mediamtx:
     plugin: go
     source: https://github.com/alexdlukens/mediamtx.git
+    source-branch: snap
     build-packages: [git, ffmpeg]
     build-snaps: [go]
     override-pull: |
