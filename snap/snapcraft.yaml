@@ -14,7 +14,7 @@ website: https://github.com/bluenviron/mediamtx.git
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
-
+source-branch: snap
 adopt-info: mediamtx
 
 parts:
