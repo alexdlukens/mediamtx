@@ -1,5 +1,5 @@
 #!/bin/sh -e
 
-# copy file from $SNAP to $SNAP_DATA
-cp $SNAP/mediamtx.yml $SNAP_DATA/mediamtx.yml
-echo "mediamtx.yml copied to $SNAP_DATA"
+# copy file from $SNAP to $SNAP_COMMON
+cp $SNAP/mediamtx.yml $SNAP_COMMON/mediamtx.yml
+echo "mediamtx.yml copied to $SNAP_COMMON"

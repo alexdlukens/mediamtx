@@ -1,6 +1,6 @@
 name: mediamtx # you probably want to 'snapcraft register <name>'
 base: core24 # the base snap is the execution environment for this snap
-version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
+version: '0.1'
 summary: real-time media server and media proxy
 description: |
   MediaMTX (formerly rtsp-simple-server) is a ready-to-use and zero-dependency 
@@ -15,17 +15,24 @@ website: https://github.com/bluenviron/mediamtx.git
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
 
+adopt-info: mediamtx
+
 parts:
   mediamtx:
     plugin: go
     source: https://github.com/alexdlukens/mediamtx.git
     build-packages: [git, ffmpeg]
     build-snaps: [go]
+    override-pull: |
+      craftctl default
+      GIT_HASH=$(git rev-parse --short HEAD)
+      VERSION=1.0.0-snap+${GIT_HASH}
+      craftctl set version=$VERSION
     override-build: |
       go mod download
-      GIT_HASH=$(git rev-parse --short HEAD)
       go generate ./...
-      go build -ldflags "-X github.com/bluenviron/mediamtx/internal/core.version=${SNAPCRAFT_PROJECT_VERSION}.${GIT_HASH}" -o $SNAPCRAFT_PART_INSTALL/bin/mediamtx
+      echo "${SNAPCRAFT_PROJECT_VERSION}" > "internal/core/VERSION"
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/mediamtx
     override-stage: |
       craftctl default
       cp $CRAFT_PART_BUILD/mediamtx.yml $CRAFT_STAGE/mediamtx.yml
@@ -35,14 +42,10 @@ parts:
 
 apps:
   mediamtx:
-    command: bin/mediamtx
+    command: bin/mediamtx $SNAP_COMMON/mediamtx.yml
     daemon: simple
     plugs:
       - network
       - network-bind
-
-layout:
-  /etc/mediamtx/mediamtx.yml:
-    bind-file: $SNAP_DATA/mediamtx.yml
 
 
