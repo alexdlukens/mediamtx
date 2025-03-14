@@ -4,7 +4,7 @@ name: Build Snap Package
 on:
   push:
     branches:
-      - snap
+      - main
 
 jobs:
   build:
