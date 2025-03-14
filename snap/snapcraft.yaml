@@ -10,9 +10,12 @@ description: |
 
   The configuration file can be edited via /snap/mediamtx/current/mediamtx.yml
 
+  This is not an official snap for MediaMTX. The code for packaging the snap can be found at https://github.com/alexdlukens/mediamtx,
+  and builds versions from the original codebase at https://github.com/bluenviron/mediamtx.git.
+
 website: https://github.com/bluenviron/mediamtx.git
 
-grade: devel # must be 'stable' to release into candidate/stable channels
+grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
 source-code: https://github.com/alexdlukens/mediamtx
 adopt-info: mediamtx
@@ -20,15 +23,17 @@ adopt-info: mediamtx
 parts:
   mediamtx:
     plugin: go
-    source: https://github.com/alexdlukens/mediamtx.git
-    source-branch: snap
+    source: https://github.com/bluenviron/mediamtx.git
     build-packages: [git, ffmpeg]
     build-snaps: [go]
     override-pull: |
       craftctl default
+      GIT_TAG="$(git tag -l | egrep -v '\-rc' | sort -rV | head -n 1)"
+      GIT_TAG_VERSION="$(echo ${GIT_TAG} | cut -d 'v' -f 2)"
       GIT_HASH=$(git rev-parse --short HEAD)
-      VERSION=1.0.0-snap+${GIT_HASH}
+      VERSION=${GIT_TAG_VERSION}-snap+${GIT_HASH}
       craftctl set version=$VERSION
+      git checkout tags/${GIT_TAG}
     override-build: |
       go mod download
       go generate ./...
