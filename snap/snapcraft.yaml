@@ -1,0 +1,57 @@
+name: mediamtx # you probably want to 'snapcraft register <name>'
+base: core24 # the base snap is the execution environment for this snap
+version: '0.1'
+summary: real-time media server and media proxy
+description: |
+  MediaMTX (formerly rtsp-simple-server) is a ready-to-use and zero-dependency 
+  real-time media server and media proxy that allows to publish, 
+  read, proxy, record and playback video and audio streams. 
+  It has been conceived as a "media router" that routes media streams from one end to the other.
+
+  The configuration file can be edited via /snap/mediamtx/current/mediamtx.yml
+
+  This is not an official snap for MediaMTX. The code for packaging the snap can be found at https://github.com/alexdlukens/mediamtx,
+  and builds versions from the original codebase at https://github.com/bluenviron/mediamtx.git.
+
+website: https://github.com/bluenviron/mediamtx.git
+
+grade: stable # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
+source-code: https://github.com/alexdlukens/mediamtx
+adopt-info: mediamtx
+
+parts:
+  mediamtx:
+    plugin: go
+    source: https://github.com/bluenviron/mediamtx.git
+    build-packages: [git, ffmpeg]
+    build-snaps: [go]
+    override-pull: |
+      craftctl default
+      GIT_TAG="$(git tag -l | egrep -v '\-rc' | sort -rV | head -n 1)"
+      GIT_TAG_VERSION="$(echo ${GIT_TAG} | cut -d 'v' -f 2)"
+      GIT_HASH=$(git rev-parse --short HEAD)
+      VERSION=${GIT_TAG_VERSION}-snap+${GIT_HASH}
+      craftctl set version=$VERSION
+      git checkout tags/${GIT_TAG}
+    override-build: |
+      go mod download
+      go generate ./...
+      echo "${SNAPCRAFT_PROJECT_VERSION}" > "internal/core/VERSION"
+      go build -o $SNAPCRAFT_PART_INSTALL/bin/mediamtx
+    override-stage: |
+      craftctl default
+      cp $CRAFT_PART_BUILD/mediamtx.yml $CRAFT_STAGE/mediamtx.yml
+    override-prime: |
+      craftctl default
+      cp $CRAFT_STAGE/mediamtx.yml $CRAFT_PRIME/mediamtx.yml
+
+apps:
+  mediamtx:
+    command: bin/mediamtx $SNAP_COMMON/mediamtx.yml
+    daemon: simple
+    plugs:
+      - network
+      - network-bind
+
+
