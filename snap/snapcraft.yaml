@@ -8,7 +8,13 @@ description: |
   read, proxy, record and playback video and audio streams. 
   It has been conceived as a "media router" that routes media streams from one end to the other.
 
-  The configuration file can be edited via /snap/mediamtx/current/mediamtx.yml
+  The configuration file can be edited via `/snap/mediamtx/current/mediamtx.yml`
+
+  Once the snap is installed, it is run as a daemon in the background. The service can be started/stopped using snap commands:
+
+  `snap stop mediamtx`
+  `snap start mediamtx`
+  `snap restart mediamtx`
 
   This is not an official snap for MediaMTX. The code for packaging the snap can be found at https://github.com/alexdlukens/mediamtx,
   and builds versions from the original codebase at https://github.com/bluenviron/mediamtx.git.
@@ -19,6 +25,8 @@ grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
 source-code: https://github.com/alexdlukens/mediamtx
 adopt-info: mediamtx
+license: "MIT"
+issues: https://github.com/alexdlukens/mediamtx/issues
 
 parts:
   mediamtx:
