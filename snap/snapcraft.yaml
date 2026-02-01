@@ -13,7 +13,9 @@ description: |
   Once the snap is installed, it is run as a daemon in the background. The service can be started/stopped using snap commands:
 
   `snap stop mediamtx`
+  
   `snap start mediamtx`
+  
   `snap restart mediamtx`
 
   This is not an official snap for MediaMTX. The code for packaging the snap can be found at https://github.com/alexdlukens/mediamtx,
